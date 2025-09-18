@@ -180,15 +180,30 @@ class LinkedInProfileAnalyzer:
             # Parse the response to extract the 3 facts
             facts = []
             lines = funny_facts_text.strip().split('\n')
+            
             for line in lines:
                 line = line.strip()
-                if line and (line.startswith('1.') or line.startswith('2.') or line.startswith('3.')):
-                    # Remove the number prefix and clean up
-                    fact = line[2:].strip()
-                    facts.append(fact)
+                # Handle various formatting patterns including "assistant: 1.", "1.", "**1.**", etc.
+                for num in [1, 2, 3]:
+                    patterns = [f'{num}.', f'assistant: {num}.', f'**{num}.**']
+                    for pattern in patterns:
+                        if line.startswith(pattern):
+                            # Extract fact text after the pattern
+                            fact = line[len(pattern):].strip()
+                            
+                            # Remove markdown formatting
+                            if fact.startswith('**') and fact.endswith('**'):
+                                fact = fact[2:-2].strip()
+                            
+                            # Remove quotes if present
+                            if fact.startswith('"') and fact.endswith('"'):
+                                fact = fact[1:-1].strip()
+                            
+                            facts.append(fact)
+                            break
             
             # Ensure we have exactly 3 facts
-            if len(facts) < 4:
+            if len(facts) < 3:
                 facts.extend([f"This person is so interesting, even AI needs more time to process their awesomeness!"] * (3 - len(facts)))
             
             return facts[:3]  # Only return first 3 facts
